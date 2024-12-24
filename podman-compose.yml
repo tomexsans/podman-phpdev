@@ -1,0 +1,55 @@
+version: "3.9"
+
+x-podman:
+  pod:
+    name: php-dev-pod # Custom pod name
+
+services:
+  postgres:
+    image: bitnami/postgresql
+    container_name: dev-php-postgres
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: mydatabasedatabase
+    ports:
+      - "5432:5432" # Map host port 5432 to container port 5432      
+    networks:
+      - php-dev-network
+
+  php-fpm:
+    image: bitnami/php-fpm
+    container_name: dev-php-fpm
+    volumes:
+      - ./php/config/php-fpm.conf:/opt/bitnami/php/etc/php-fpm.conf # Bind mount PHP-FPM config
+      - ./src:/var/www
+    ports:
+      - "9000:9000"     # php-fpm cgi handler      
+    networks:
+      - php-dev-network
+
+  nginx:
+    image: nginx
+    container_name: dev-php-nginx
+    volumes:
+      - ./nginx/config:/etc/nginx/conf.d
+      - ./src/html:/usr/share/nginx/html
+      - ./src:/var/www
+    ports:
+      - "80:80"     # Map host port 80 to container port 80      
+    networks:
+      - php-dev-network
+
+  memcached:
+    image: memcached
+    container_name: dev-php-memcached
+    ports:
+      - "11211:11211" # Default memcached port
+    networks:
+      - php-dev-network
+
+networks:
+  php-dev-network:
+    driver: bridge

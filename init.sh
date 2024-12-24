@@ -86,8 +86,11 @@ podman run -d --pod ${POD_NAME} --name dev-php-nginx \
 # Create PHP-FPM Container
 podman run -d --pod ${POD_NAME} --name dev-php-fpm \
     -v ./src:/var/www \
-    -v ./php/config/custom.ini:/opt/bitnami/php/etc/conf.d/custom.ini \
+    -v ./php/config:/opt/bitnami/php/etc/conf.d \
     bitnami/php-fpm
+
+podman run -d --pod ${POD_NAME} --name dev-nodejs -v ./src:/var/www \
+    node:latest tail -f /dev/null 
 
 # Create Memcached Container
 podman run -d --pod ${POD_NAME} --name dev-php-memcached memcached

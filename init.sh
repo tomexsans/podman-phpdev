@@ -63,7 +63,9 @@ phpinfo();
 EOF
 
 # Create the Pod with the PORTS
-podman pod create --name ${POD_NAME} -p 80:80 -p 8080:8080 -p 5432:5432 -p 9000:9000 -p 11211:11211
+podman pod create --name ${POD_NAME} -p 80:80 -p 8080:8080 -p 5432:5432 \
+    -p 9000:9000 -p 11211:11211 \
+    -p 5173:5173 -p 5174:5174
 
 # In case of an error (Rootless Podman and ports < 1024)
 sudo sysctl net.ipv4.ip_unprivileged_port_start=80

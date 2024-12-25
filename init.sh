@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Set pod name
-POD_NAME=php-dev-env-pod
+POD_NAME=phpdev3-env
+CONTAINER_ALIAS=${POD_NAME}-cont-
 
 # Create necessary directories
 mkdir -p nginx/config
@@ -25,7 +26,7 @@ server {
     # PHP-FPM handling
     location ~ \.php$ {
         include fastcgi_params;
-        fastcgi_pass dev-php-fpm:9000;  # Name of the PHP-FPM container and port (inside the pod)
+        fastcgi_pass ${CONTAINER_ALIAS}php-fpm:9000;  # Name of the PHP-FPM container and port (inside the pod)
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
     }
@@ -37,12 +38,16 @@ server {
 }
 EOF
 
-# Create custom PHP configuration file (custom.ini and php-fpm.conf)
-touch ./php/config/custom.ini
-touch ./php/config/php-fpm.conf
+# Create custom PHP configuration files
+cat <<EOF > $(pwd)/php/config/custom.ini
+# Disable opcache in the container, if not PHP files are cached
+opcache.enable=0
+opcache.enable_cli=0
+EOF
+touch $(pwd)/php/config/php-fpm.conf
 
 # Create a simple HTML page in src/html/index.html
-cat <<EOF > ./src/html/index.html
+cat <<EOF > $(pwd)/src/html/index.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -57,9 +62,10 @@ cat <<EOF > ./src/html/index.html
 EOF
 
 # Create a simple PHP page in src/html/index.php
-cat <<EOF > ./src/html/index.php
+cat <<EOF > $(pwd)/src/html/index.php
 <?php
 phpinfo();
+?>
 EOF
 
 # Create the Pod with the PORTS
@@ -67,32 +73,34 @@ podman pod create --name ${POD_NAME} -p 80:80 -p 8080:8080 -p 5432:5432 \
     -p 9000:9000 -p 11211:11211 \
     -p 5173:5173 -p 5174:5174
 
-# In case of an error (Rootless Podman and ports < 1024)
+# Adjust for Rootless Podman and ports < 1024
 sudo sysctl net.ipv4.ip_unprivileged_port_start=80
 
 # Create PostgreSQL Container
-podman run -d --pod ${POD_NAME} --name dev-php-postgres \
-    -v ./postgres/data:/var/lib/postgresql/data \
+podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}postgres \
+    -v $(pwd)/postgres/data:/var/lib/postgresql/data \
     -e POSTGRES_USER=user \
     -e POSTGRES_PASSWORD=pass \
-    -e POSTGRES_DB=mydatabasedatabase \
+    -e POSTGRES_DB=mydatabase \
     bitnami/postgresql
 
 # Create Nginx Container
-podman run -d --pod ${POD_NAME} --name dev-php-nginx \
-    -v ./nginx/config:/etc/nginx/conf.d \
-    -v ./src/html:/usr/share/nginx/html \
-    -v ./src:/var/www \
+podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}nginx \
+    -v $(pwd)/nginx/config:/etc/nginx/conf.d \
+    -v $(pwd)/src/html:/usr/share/nginx/html \
+    -v $(pwd)/src:/var/www \
     nginx
 
 # Create PHP-FPM Container
-podman run -d --pod ${POD_NAME} --name dev-php-fpm \
-    -v ./src:/var/www \
-    -v ./php/config:/opt/bitnami/php/etc/conf.d \
+podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}php-fpm \
+    --mount type=bind,source=$(pwd)/src,target=/var/www,bind-propagation=rshared \
+    --mount type=bind,source=$(pwd)/php/config,target=/opt/bitnami/php/etc/conf.d,bind-propagation=rshared \
     bitnami/php-fpm
 
-podman run -d --pod ${POD_NAME} --name dev-nodejs -v ./src:/var/www \
-    node:latest tail -f /dev/null 
+# Create Node.js Container
+podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}nodejs \
+    -v $(pwd)/src:/var/www \
+    node:latest tail -f /dev/null
 
 # Create Memcached Container
-podman run -d --pod ${POD_NAME} --name dev-php-memcached memcached
+podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}memcached memcached

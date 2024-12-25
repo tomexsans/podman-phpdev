@@ -9,6 +9,9 @@
 ## Podman must be installed!
 - https://podman.io/
 
+## Tired of CLI
+- Podman has a GUI https://podman-desktop.io/
+
 ## How To Use
 
 - copy the `init.sh` on your directory
@@ -21,6 +24,12 @@
 ## NGINX not Running after init.sh?
 - after the `init.sh` nginx may be down because of dependencies which are not yet done loading.
 - Just start it manually
+
+
+## Using Podman desktop
+![View the Pods](img/image2.png)
+![Usage on Podman Desktop](img/image.png)
+
 
 
 ## POD wont start after HOST reboot

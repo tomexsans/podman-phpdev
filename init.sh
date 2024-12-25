@@ -43,6 +43,8 @@ cat <<EOF > $(pwd)/php/config/custom.ini
 # Disable opcache in the container, if not PHP files are cached
 opcache.enable=0
 opcache.enable_cli=0
+# Enable other Extensions
+extension=pdo_pgsql
 EOF
 touch $(pwd)/php/config/php-fpm.conf
 

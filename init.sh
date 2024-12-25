@@ -56,7 +56,7 @@ cat <<EOF > $(pwd)/src/html/index.html
     <title>Hello</title>
 </head>
 <body>
-    <h1>Hello From the Other Side</h1>
+    <h1>Greetings from PODMAN Container</h1>
 </body>
 </html>
 EOF
@@ -64,7 +64,8 @@ EOF
 # Create a simple PHP page in src/html/index.php
 cat <<EOF > $(pwd)/src/html/index.php
 <?php
-phpinfo();
+echo "Greetings from PODMAN Container (PHP is Running!)";
+//phpinfo();
 ?>
 EOF
 
@@ -84,18 +85,18 @@ podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}postgres \
     -e POSTGRES_DB=mydatabase \
     bitnami/postgresql
 
+# Create PHP-FPM Container
+podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}php-fpm \
+    --mount type=bind,source=$(pwd)/src,target=/var/www,bind-propagation=rshared \
+    --mount type=bind,source=$(pwd)/php/config,target=/opt/bitnami/php/etc/conf.d,bind-propagation=rshared \
+    bitnami/php-fpm
+
 # Create Nginx Container
 podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}nginx \
     -v $(pwd)/nginx/config:/etc/nginx/conf.d \
     -v $(pwd)/src/html:/usr/share/nginx/html \
     -v $(pwd)/src:/var/www \
     nginx
-
-# Create PHP-FPM Container
-podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}php-fpm \
-    --mount type=bind,source=$(pwd)/src,target=/var/www,bind-propagation=rshared \
-    --mount type=bind,source=$(pwd)/php/config,target=/opt/bitnami/php/etc/conf.d,bind-propagation=rshared \
-    bitnami/php-fpm
 
 # Create Node.js Container
 podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}nodejs \

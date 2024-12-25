@@ -9,7 +9,14 @@
 ## Podman must be installed!
 - https://podman.io/
 
-
+## Podman Registries must be set
+```
+unqualified-search-registries = ['docker.io','ghrc.io','quay.io']
+```
+- can be added to the following files:
+- Option 1: create or update `$HOME/.config/containers/registries.conf`
+- Option 2: update `/etc/containers/registries.conf`
+- i would prefer the option 1 for cleaner
 
 ## How To Use
 

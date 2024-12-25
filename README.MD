@@ -9,8 +9,7 @@
 ## Podman must be installed!
 - https://podman.io/
 
-## Tired of CLI
-- Podman has a GUI https://podman-desktop.io/
+
 
 ## How To Use
 
@@ -26,7 +25,22 @@
 - Just start it manually
 
 
-## Using Podman desktop
+## Check
+```bash
+# list running
+podman ps
+
+# List pods
+podman pod list
+
+# want to enter a container?
+podman exec -ti <container name> bash
+
+```
+
+
+## Tired of CLI? Try Using Podman desktop
+- Podman has a GUI https://podman-desktop.io/
 ![View the Pods](img/image2.png)
 ![Usage on Podman Desktop](img/image.png)
 

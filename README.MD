@@ -20,9 +20,17 @@ unqualified-search-registries = ['docker.io','ghrc.io','quay.io']
 
 ## How To Use
 
+
+### Manual Download
 - copy the `init.sh` on your directory
+- using curl
+- `curl https://github.com/tomexsans/podman-phpdev/blob/main/init.sh > init.sh`
+- using wget
+- `wget https://github.com/tomexsans/podman-phpdev/blob/main/init.sh`
 - make it executable `chmod +x init.sh`
 - execute the file `bash init.sh` or `./init.sh`
+
+### Podman-compose
 - if you don't want to create a pod a `podman-compos.yml` file is available just run `podman compose up -d`
 - ensure `podman-compose` and `docker-compose` is installed on your system
 

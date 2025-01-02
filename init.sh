@@ -9,8 +9,7 @@ PORTS=(
   "80:80" #Nginx
   "8080:8080" #used default by laravel app
   "5432:5432" #postgresql
-  "11184:11184" # will be used as port for php-fpm latest
-  "11185:11185" # will be used as port for php-fpm8.3
+  "9000:9000" # will be used as port for php-fpm latest
   "11211:11211" # memcached
   "5173:5173" #vite
   "5174:5174" #vite

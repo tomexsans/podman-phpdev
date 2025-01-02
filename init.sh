@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set pod name
-POD_NAME=BRRPBRRP
+POD_NAME=Podman-php-devenv
 CONTAINER_ALIAS=${POD_NAME}-cont-
 
 # Define ALl Ports to be used container:host

@@ -24,10 +24,12 @@ unqualified-search-registries = ['docker.io','ghrc.io','quay.io']
 ### Manual Download
 - copy the `init.sh` on your directory
 - using curl
-- `curl https://github.com/tomexsans/podman-phpdev/blob/main/init.sh > init.sh`
+- `curl https://raw.githubusercontent.com/tomexsans/podman-phpdev/refs/heads/main/init.sh > init.sh`
 - using wget
-- `wget https://github.com/tomexsans/podman-phpdev/blob/main/init.sh`
+- `wget https://raw.githubusercontent.com/tomexsans/podman-phpdev/refs/heads/main/init.sh`
 - make it executable `chmod +x init.sh`
+- configure the bash file for paths Especially the sourceFiles path
+- the Bash script will automatically generate `index.php` and `index.html` file on the `${srcPath}/html` directory. Remove or comment out if you don't want to overwrite existing files
 - execute the file `bash init.sh` or `./init.sh`
 
 ### Podman-compose

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set pod name
-POD_NAME=PHPDEVTOM
+POD_NAME=BRRPBRRP
 CONTAINER_ALIAS=${POD_NAME}-cont-
 
 # Define ALl Ports to be used container:host
@@ -16,14 +16,22 @@ PORTS=(
   "5174:5174" #vite
 )
 
+#FILE PATHS
+NGINX_CONFIG_PATH=$(pwd)/config/nginx/config
+PHP_CONFIG_PATH=$(pwd)/config/php/config
+POSTGRE_DATA_PATH=$(pwd)/config/postgres/data
+POSTGRE_CONFIG_PATH=$(pwd)/config/postgres/config
+SOURCE_PATH=../srcFiles
+
 # Create necessary directories
-mkdir -p config/nginx/config
-mkdir -p config/php/config
-mkdir -p config/postgres/data
-mkdir -p src/html
+mkdir -p ${NGINX_CONFIG_PATH}
+mkdir -p ${PHP_CONFIG_PATH}
+mkdir -p ${POSTGRE_DATA_PATH}
+mkdir -p ${POSTGRE_CONFIG_PATH}
+mkdir -p ${SOURCE_PATH}/html
 
 # Create NGINX default.conf
-cat <<EOF > $(pwd)config/nginx/config/default.conf
+cat <<EOF > ${NGINX_CONFIG_PATH}/default.conf
 server {
     listen 80;  # Listen on port 80 for HTTP traffic
     server_name localhost;  # Server name or IP address
@@ -59,17 +67,17 @@ server {
 EOF
 
 # Create custom PHP configuration files
-cat <<EOF > $(pwd)config/php/config/custom.ini
+cat <<EOF > ${PHP_CONFIG_PATH}/custom.ini
 # Disable opcache in the container, if not PHP files are cached
 opcache.enable=0
 opcache.enable_cli=0
 # Enable other Extensions
 extension=pdo_pgsql
 EOF
-touch $(pwd)config/php/config/php-fpm.conf
+touch ${PHP_CONFIG_PATH}/php-fpm.conf
 
 # Create a simple HTML page in src/html/index.html
-cat <<EOF > $(pwd)/src/html/index.html
+cat <<EOF > ${SOURCE_PATH}/html/index.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -84,7 +92,7 @@ cat <<EOF > $(pwd)/src/html/index.html
 EOF
 
 # Create a simple PHP page in src/html/index.php
-cat <<EOF > $(pwd)/src/html/index.php
+cat <<EOF > ${SOURCE_PATH}/html/index.php
 <?php
 echo "Greetings from PODMAN Container (PHP is Running!)";
 //phpinfo();
@@ -109,37 +117,37 @@ sudo sysctl net.ipv4.ip_unprivileged_port_start=80
 
 # Create PostgreSQL Container
 podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}postgres \
-    -v $(pwd)/postgres/data:/bitnami/postgresql \
+    -v ${POSTGRE_DATA_PATH}:/bitnami/postgresql \
     -e POSTGRES_USER=user \
     -e POSTGRES_PASSWORD=pass \
     -e POSTGRES_DB=mydatabase \
     bitnami/postgresql
 
-# Create PHP-FPM Container for PHP Latest version, bind to port 74784
+# Create PHP-FPM Container for PHP Latest version, bind to port 9000
 podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}php-fpm \
-    --mount type=bind,source=$(pwd)/src,target=/var/www,bind-propagation=rshared \
-    --mount type=bind,source=$(pwd)/php/config,target=/opt/bitnami/php/etc/conf.d,bind-propagation=rshared \
+    --mount type=bind,source=${SOURCE_PATH},target=/var/www,bind-propagation=rshared \
+    --mount type=bind,source=${PHP_CONFIG_PATH},target=/opt/bitnami/php/etc/conf.d,bind-propagation=rshared \
     bitnami/php-fpm
 
 ## Create PHP-FPM container for a specific php version
 ## https://hub.docker.com/r/bitnami/php-fpm
-podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}php-fpm8.3 \
-    --mount type=bind,source=$(pwd)/src,target=/var/www,bind-propagation=rshared \
-    --mount type=bind,source=$(pwd)/php/config,target=/opt/bitnami/php/etc/conf.d,bind-propagation=rshared \
-    bitnami/php-fpm:8.3
+#podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}php-fpm8.3 \
+#    --mount type=bind,source=${SOURCE_PATH},target=/var/www,bind-propagation=rshared \
+#    --mount type=bind,source=${PHP_CONFIG_PATH},target=/opt/bitnami/php/etc/conf.d,bind-propagation=rshared \
+#    bitnami/php-fpm:8.3
 
 
 
 # Create Nginx Container
 podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}nginx \
-    -v $(pwd)/nginx/config:/etc/nginx/conf.d \
-    -v $(pwd)/src/html:/usr/share/nginx/html \
-    -v $(pwd)/src:/var/www \
+    -v ${NGINX_CONFIG_PATH}:/etc/nginx/conf.d \
+    -v ${SOURCE_PATH}/html:/usr/share/nginx/html \
+    -v ${SOURCE_PATH}:/var/www \
     nginx
 
 # Create Node.js Container
 podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}nodejs \
-    -v $(pwd)/src:/var/www \
+    -v ${SOURCE_PATH}:/var/www \
     node:latest tail -f /dev/null
 
 # Create Memcached Container

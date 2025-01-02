@@ -20,7 +20,7 @@ NGINX_CONFIG_PATH=$(pwd)/config/nginx/config
 PHP_CONFIG_PATH=$(pwd)/config/php/config
 POSTGRE_DATA_PATH=$(pwd)/config/postgres/data
 POSTGRE_CONFIG_PATH=$(pwd)/config/postgres/config
-SOURCE_PATH=../srcFiles
+SOURCE_PATH=$(pwd)/srcFiles
 
 # Create necessary directories
 mkdir -p ${NGINX_CONFIG_PATH}

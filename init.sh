@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set pod name
-POD_NAME=Podman-php-devenv
+POD_NAME=devserver1
 CONTAINER_ALIAS=${POD_NAME}-cont-
 
 # Define ALl Ports to be used container:host
@@ -9,18 +9,16 @@ PORTS=(
   "80:80" #Nginx
   "8080:8080" #used default by laravel app
   "5432:5432" #postgresql
-  "9000:9000" # will be used as port for php-fpm latest
+  "9000:9000" #PHP FPM
   "11211:11211" # memcached
-  "5173:5173" #vite
-  "5174:5174" #vite
 )
 
 #FILE PATHS
 NGINX_CONFIG_PATH=$(pwd)/config/nginx/config
 PHP_CONFIG_PATH=$(pwd)/config/php/config
-POSTGRE_DATA_PATH=$(pwd)/config/postgres/data
+POSTGRE_DATA_PATH=$(pwd)/config/postgres #Bitnami
 POSTGRE_CONFIG_PATH=$(pwd)/config/postgres/config
-SOURCE_PATH=$(pwd)/srcFiles
+SOURCE_PATH=../sites
 
 # Create necessary directories
 mkdir -p ${NGINX_CONFIG_PATH}
@@ -72,6 +70,9 @@ opcache.enable=0
 opcache.enable_cli=0
 # Enable other Extensions
 extension=pdo_pgsql
+extension=memcached
+display_errors = On
+error_reporting = ~E_ALL
 EOF
 touch ${PHP_CONFIG_PATH}/php-fpm.conf
 
@@ -114,26 +115,35 @@ eval "$POD_CREATE_CMD"
 # Adjust for Rootless Podman and ports < 1024
 sudo sysctl net.ipv4.ip_unprivileged_port_start=80
 
-# Create PostgreSQL Container
+# Create PostgreSQL Container BITNAMI
+#podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}postgres \
+#    -v ${POSTGRE_DATA_PATH}:/bitnami/postgresql \
+#    -e POSTGRES_USER=user \
+#    -e POSTGRES_PASSWORD=pass \
+#    -e POSTGRES_DB=mydatabase \
+#    bitnami/postgresql
+
 podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}postgres \
-    -v ${POSTGRE_DATA_PATH}:/bitnami/postgresql \
     -e POSTGRES_USER=user \
     -e POSTGRES_PASSWORD=pass \
-    -e POSTGRES_DB=mydatabase \
-    bitnami/postgresql
+    -e PGDATA=/var/lib/postgresql/data/pgdata \
+    -v ${POSTGRE_DATA_PATH}:/var/lib/postgresql/data \
+    postgres
+
+
 
 # Create PHP-FPM Container for PHP Latest version, bind to port 9000
-podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}php-fpm \
-    --mount type=bind,source=${SOURCE_PATH},target=/var/www,bind-propagation=rshared \
-    --mount type=bind,source=${PHP_CONFIG_PATH},target=/opt/bitnami/php/etc/conf.d,bind-propagation=rshared \
-    bitnami/php-fpm
+#podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}php-fpm \
+#    --mount type=bind,source=${SOURCE_PATH},target=/var/www,bind-propagation=rshared \
+#    --mount type=bind,source=${PHP_CONFIG_PATH},target=/opt/bitnami/php/etc/conf.d,bind-propagation=rshared \
+#    bitnami/php-fpm
 
 ## Create PHP-FPM container for a specific php version
 ## https://hub.docker.com/r/bitnami/php-fpm
-#podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}php-fpm8.3 \
-#    --mount type=bind,source=${SOURCE_PATH},target=/var/www,bind-propagation=rshared \
-#    --mount type=bind,source=${PHP_CONFIG_PATH},target=/opt/bitnami/php/etc/conf.d,bind-propagation=rshared \
-#    bitnami/php-fpm:8.3
+podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}php-fpm8.3 \
+    --mount type=bind,source=${SOURCE_PATH},target=/var/www,bind-propagation=rshared \
+    --mount type=bind,source=${PHP_CONFIG_PATH},target=/opt/bitnami/php/etc/conf.d,bind-propagation=rshared \
+    bitnami/php-fpm:8.3
 
 
 

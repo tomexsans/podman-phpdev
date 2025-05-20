@@ -11,6 +11,9 @@ PORTS=(
   "5432:5432" #postgresql
   "9000:9000" #PHP FPM
   "11211:11211" # memcached
+  "13714:13714" #inertia SSR
+  "5173:5173" #vite
+  "5174:5174" #vite
 )
 
 #FILE PATHS

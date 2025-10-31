@@ -1,0 +1,24 @@
+# Containerfile
+FROM bitnami/php-fpm:latest
+
+USER root
+
+# Install required packages
+RUN install_packages curl bash ca-certificates git
+
+# Set up NVM environment
+ENV NVM_DIR=/usr/local/nvm
+ENV NODE_VERSION=20
+ENV PATH=$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
+
+# Install NVM, Node.js (LTS), and Yarn
+RUN mkdir -p $NVM_DIR \
+    && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash \
+    && . "$NVM_DIR/nvm.sh" \
+    && nvm install --lts \
+    && nvm alias default 'lts/*' \
+    && nvm use default \
+    && npm install -g yarn
+
+# Ensure NVM and Node are available for future layers and shell sessions
+ENV PATH="$NVM_DIR/versions/node/$(ls $NVM_DIR/versions/node)/bin:$PATH"

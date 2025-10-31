@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Set pod name
-POD_NAME=ult-lardev2
+POD_NAME=dev-server
 CONTAINER_ALIAS=${POD_NAME}-cont-
-SOURCE_PATH=../../sites
+SOURCE_PATH=../../Sites/Project1
 
 # Define ALl Ports to be used container:host
 PORTS=(
@@ -66,8 +66,8 @@ cat <<EOF > ${PHP_CONFIG_PATH}/custom.ini
 opcache.enable=0
 opcache.enable_cli=0
 ## Enable other Extensions
-#extension=pdo_pgsql
-#extension=memcached
+extension=pdo_pgsql
+extension=memcached
 display_errors = On
 error_reporting = ~E_ALL
 memory_limit = -1
@@ -129,10 +129,11 @@ podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}postgres \
     postgres
 
 # Create PHP-FPM Container for PHP Latest version, that defaultly bind to port 9000
+podman build -t local-bitnamiphp -f ./containerFiles/PhpContainerFile .
 podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}php-fpm \
     --mount type=bind,source=${SOURCE_PATH},target=/var/www,bind-propagation=rshared \
     --mount type=bind,source=${PHP_CONFIG_PATH},target=/opt/bitnami/php/etc/conf.d,bind-propagation=rshared \
-    bitnami/php-fpm
+    local-bitnamiphp
 
 
 #Create Supervisor Container from Bitnami.php
@@ -141,12 +142,12 @@ podman run -d --name ${CONTAINER_ALIAS}supervisor \
   --pod $POD_NAME \
   --mount type=bind,source=${SOURCE_PATH},target=/var/www,bind-propagation=rshared \
   --mount type=bind,source=${SUPERVISOR_CONFIG_PATH},target=/etc/supervisor/conf.d,bind-propagation=rshared \
+  --mount type=bind,source=${PHP_CONFIG_PATH},target=/opt/bitnami/php/etc/conf.d,bind-propagation=rshared \
   local-supervisor
 
 
 # Create Memcached Container
 podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}memcached memcached
-
 
 # Create Nginx Container
 podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}nginx \

@@ -31,10 +31,22 @@ unqualified-search-registries = ['docker.io','ghrc.io','quay.io']
 - configure the bash file for paths Especially the sourceFiles path
 - the Bash script will automatically generate `index.php` and `index.html` file on the `${srcPath}/html` directory. Remove or comment out if you don't want to overwrite existing files
 - execute the file `bash init.sh` or `./init.sh`
+- this will create a new directory called config
 
-### Podman-compose
-- if you don't want to create a pod a `podman-compos.yml` file is available just run `podman compose up -d`
-- ensure `podman-compose` and `docker-compose` is installed on your system
+Config is where you place files to configure each
+config
+├── nginx
+│   └── config
+│       └── default.conf
+├── php
+│   └── config
+│       ├── custom.ini
+│       └── php-fpm.conf
+├── postgres
+    └── config
+└── supervisor
+    └── config
+        └── supervisord.conf
 
 
 ## NGINX not Running after init.sh?

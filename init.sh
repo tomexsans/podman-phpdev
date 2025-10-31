@@ -65,11 +65,12 @@ cat <<EOF > ${PHP_CONFIG_PATH}/custom.ini
 # Disable opcache in the container, if not PHP files are cached
 opcache.enable=0
 opcache.enable_cli=0
-# Enable other Extensions
-extension=pdo_pgsql
-extension=memcached
+## Enable other Extensions
+#extension=pdo_pgsql
+#extension=memcached
 display_errors = On
 error_reporting = ~E_ALL
+memory_limit = -1
 EOF
 touch ${PHP_CONFIG_PATH}/php-fpm.conf
 
@@ -127,7 +128,7 @@ podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}postgres \
     -v ${POSTGRE_DATA_PATH}:/var/lib/postgresql/data \
     postgres
 
-# Create PHP-FPM Container for PHP Latest version, bind to port 9000
+# Create PHP-FPM Container for PHP Latest version, that defaultly bind to port 9000
 podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}php-fpm \
     --mount type=bind,source=${SOURCE_PATH},target=/var/www,bind-propagation=rshared \
     --mount type=bind,source=${PHP_CONFIG_PATH},target=/opt/bitnami/php/etc/conf.d,bind-propagation=rshared \

@@ -146,3 +146,11 @@ podman run -d --name ${CONTAINER_ALIAS}supervisor \
 
 # Create Memcached Container
 podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}memcached memcached
+
+
+# Create Nginx Container
+podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}nginx \
+    -v ${NGINX_CONFIG_PATH}:/etc/nginx/conf.d \
+    -v ${SOURCE_PATH}/html:/usr/share/nginx/html \
+    -v ${SOURCE_PATH}:/var/www \
+    nginx

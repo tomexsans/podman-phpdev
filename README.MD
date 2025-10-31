@@ -1,10 +1,14 @@
 # What is This?
-- This is a Dev Environment for PHP using PODMAN pods an alternative to docker.
+## A LARAVEL Development Environment that uses PODMAN
+- PHP 8 latest
+- PostGresql
+- Nginx
+- Memcached
+- Supervisor
 
 
 ## Why PODMAN?
-- Well for me, it's More lighter and is deamonless
-
+- Podman is Lighter,Faster and is deamonless
 
 ## Podman must be installed!
 - https://podman.io/
@@ -34,6 +38,7 @@ unqualified-search-registries = ['docker.io','ghrc.io','quay.io']
 - this will create a new directory called config
 
 Config is where you place files to configure each
+```
 config
 ├── nginx
 │   └── config
@@ -47,7 +52,7 @@ config
 └── supervisor
     └── config
         └── supervisord.conf
-
+```
 
 ## NGINX not Running after init.sh?
 - after the `init.sh` nginx may be down because of dependencies which are not yet done loading.

@@ -5,6 +5,13 @@ FROM bitnami/php-fpm:latest
 USER root
 RUN install_packages supervisor
 
+# Add NodeSource repo and install Node.js (LTS version)
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
+    && install_packages nodejs
+
+# Optional: verify installation
+RUN node -v && npm -v
+
 # Optional: create Supervisor log folder
 RUN mkdir -p /var/log/supervisor
 

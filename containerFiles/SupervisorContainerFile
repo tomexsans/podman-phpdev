@@ -1,0 +1,12 @@
+# Use the same base image as your php-fpm service
+FROM bitnami/php-fpm:latest
+
+# Install supervisor inside that same PHP environment
+USER root
+RUN install_packages supervisor
+
+# Optional: create Supervisor log folder
+RUN mkdir -p /var/log/supervisor
+
+# Start Supervisor instead of php-fpm
+CMD ["/usr/bin/supervisord", "-n"]

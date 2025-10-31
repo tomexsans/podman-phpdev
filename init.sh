@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # Set pod name
-POD_NAME=devserver1
+POD_NAME=ult-lardev2
 CONTAINER_ALIAS=${POD_NAME}-cont-
+SOURCE_PATH=../../sites
 
 # Define ALl Ports to be used container:host
 PORTS=(
@@ -19,15 +20,16 @@ PORTS=(
 #FILE PATHS
 NGINX_CONFIG_PATH=$(pwd)/config/nginx/config
 PHP_CONFIG_PATH=$(pwd)/config/php/config
-POSTGRE_DATA_PATH=$(pwd)/config/postgres #Bitnami
+POSTGRE_DATA_PATH=$(pwd)/config/postgres
 POSTGRE_CONFIG_PATH=$(pwd)/config/postgres/config
-SOURCE_PATH=../sites
+SUPERVISOR_CONFIG_PATH=$(pwd)/config/supervisor/config
 
 # Create necessary directories
 mkdir -p ${NGINX_CONFIG_PATH}
 mkdir -p ${PHP_CONFIG_PATH}
 mkdir -p ${POSTGRE_DATA_PATH}
 mkdir -p ${POSTGRE_CONFIG_PATH}
+mkdir -p ${SUPERVISOR_CONFIG_PATH}
 mkdir -p ${SOURCE_PATH}/html
 
 # Create NGINX default.conf
@@ -50,14 +52,6 @@ server {
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
     }
-
-    ## Sample template to support other PHP versions multiple
-    #location ~ \.php$ {
-    #    include fastcgi_params;
-    #    fastcgi_pass ${CONTAINER_ALIAS}php-fpm8.3:9000;  # Name of the PHP-FPM container and port (inside the pod)
-    #    fastcgi_index index.php;
-    #    fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-    #}
 
     error_page 404 /404.html;
     location = /404.html {
@@ -102,6 +96,14 @@ echo "Greetings from PODMAN Container (PHP is Running!)";
 ?>
 EOF
 
+# Create a simple PHP page in src/html/index.php
+cat <<EOF > ${SUPERVISOR_CONFIG_PATH}/supervisord.conf
+[supervisord]
+nodaemon=true
+logfile=/var/log/supervisor/supervisord.log
+EOF
+
+
 # Create the Pod with the PORTS
 # Port 74784 will be used for PHP-FPM socket to parse php-8.4
 # Add ports here if you plan to support multiple PHP 74783 is added also
@@ -118,14 +120,6 @@ eval "$POD_CREATE_CMD"
 # Adjust for Rootless Podman and ports < 1024
 sudo sysctl net.ipv4.ip_unprivileged_port_start=80
 
-# Create PostgreSQL Container BITNAMI
-#podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}postgres \
-#    -v ${POSTGRE_DATA_PATH}:/bitnami/postgresql \
-#    -e POSTGRES_USER=user \
-#    -e POSTGRES_PASSWORD=pass \
-#    -e POSTGRES_DB=mydatabase \
-#    bitnami/postgresql
-
 podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}postgres \
     -e POSTGRES_USER=user \
     -e POSTGRES_PASSWORD=pass \
@@ -133,34 +127,21 @@ podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}postgres \
     -v ${POSTGRE_DATA_PATH}:/var/lib/postgresql/data \
     postgres
 
-
-
 # Create PHP-FPM Container for PHP Latest version, bind to port 9000
-#podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}php-fpm \
-#    --mount type=bind,source=${SOURCE_PATH},target=/var/www,bind-propagation=rshared \
-#    --mount type=bind,source=${PHP_CONFIG_PATH},target=/opt/bitnami/php/etc/conf.d,bind-propagation=rshared \
-#    bitnami/php-fpm
-
-## Create PHP-FPM container for a specific php version
-## https://hub.docker.com/r/bitnami/php-fpm
-podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}php-fpm8.3 \
+podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}php-fpm \
     --mount type=bind,source=${SOURCE_PATH},target=/var/www,bind-propagation=rshared \
     --mount type=bind,source=${PHP_CONFIG_PATH},target=/opt/bitnami/php/etc/conf.d,bind-propagation=rshared \
-    bitnami/php-fpm:8.3
+    bitnami/php-fpm
 
 
+#Create Supervisor Container from Bitnami.php
+podman build -t local-supervisor -f ./containerFiles/SupervisorContainerFile .
+podman run -d --name ${CONTAINER_ALIAS}supervisor \
+  --pod $POD_NAME \
+  --mount type=bind,source=${SOURCE_PATH},target=/var/www,bind-propagation=rshared \
+  --mount type=bind,source=${SUPERVISOR_CONFIG_PATH},target=/etc/supervisor/conf.d,bind-propagation=rshared \
+  local-supervisor
 
-# Create Nginx Container
-podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}nginx \
-    -v ${NGINX_CONFIG_PATH}:/etc/nginx/conf.d \
-    -v ${SOURCE_PATH}/html:/usr/share/nginx/html \
-    -v ${SOURCE_PATH}:/var/www \
-    nginx
-
-# Create Node.js Container
-podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}nodejs \
-    -v ${SOURCE_PATH}:/var/www \
-    node:latest tail -f /dev/null
 
 # Create Memcached Container
 podman run -d --pod ${POD_NAME} --name ${CONTAINER_ALIAS}memcached memcached
